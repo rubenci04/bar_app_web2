@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-6 text-brand-primary">{{ action }} Usuario</h1>
+<div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-lg mx-auto">
+    <form method="POST" action="{{ form_action }}" id="userForm" novalidate>
+        {{ csrf_token() }} {# <--- TOKEN CSRF AÑADIDO #}
+        <div class="space-y-6">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Nombre de Usuario</label>
+                <input type="text" name="username" id="username" 
+                       value="{{ user.username if user and user.username is not none else '' }}" required
+                       {% if action == 'Editar' %}readonly title="El nombre de usuario no se puede cambiar." class="mt-1 block w-full px-4 py-2 border border-gray-600 bg-gray-600 text-gray-400 rounded-md shadow-sm sm:text-sm cursor-not-allowed"{% else %}class="mt-1 block w-full px-4 py-2 border {% if errors and errors.username %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500"{% endif %}
+                       placeholder="nombre.usuario">
+                <span id="username_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.get('username', '') }}</span>
+                {% if action == 'Editar' %}
+                <p class="text-xs text-gray-500 mt-1">El nombre de usuario no se puede modificar una vez creado.</p>
+                {% endif %}
+            </div>
+
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Contraseña</label>
+                <input type="password" name="password" id="password" 
+                       {% if action == 'Añadir' %}required{% endif %}
+                       placeholder="{{ 'Dejar vacío para no cambiar' if action == 'Editar' else 'Mínimo 6 caracteres' }}"
+                       class="mt-1 block w-full px-4 py-2 border {% if errors and errors.password %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500">
+                <span id="password_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.get('password', '') }}</span>
+                {% if action == 'Editar' and not (errors and errors.password) %}
+                    <p class="text-xs text-gray-500 mt-1">Si dejas este campo vacío, la contraseña actual no se modificará.</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <label for="role" class="block text-sm font-medium text-gray-300 mb-1">Rol</label>
+                <select name="role" id="role" required
+                        class="mt-1 block w-full px-4 py-2.5 border {% if errors and errors.role %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                    <option value="" {% if not (user and user.role) %}selected disabled{% endif %}>Selecciona un rol...</option>
+                    <option value="mozo" {% if user and user.role == 'mozo' %}selected{% endif %}>Mozo</option>
+                    <option value="admin" {% if user and user.role == 'admin' %}selected{% endif %}>Admin</option>
+                </select>
+                <span id="role_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.get('role', '') }}</span>
+            </div>
+        </div>
+
+        <div class="flex justify-end space-x-4 mt-10">
+            <a href="{{ url_for('admin.manage_users') }}" class="btn btn-black px-6 py-2.5 text-sm">Cancelar</a>
+            <button type="submit" class="btn btn-orange px-6 py-2.5 text-sm">{{ action }} Usuario</button>
+        </div>
+    </form>
+</div>
+{# ... (script JS de validación sin cambios, ya lo tienes) ... #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const userForm = document.getElementById('userForm');
+    const action = {{ action | tojson }}; 
+    function setFieldError(inputElement, errorElement, message) { if (errorElement) errorElement.textContent = message; if (inputElement) { inputElement.classList.add('border-red-500', 'ring-red-500'); inputElement.classList.remove('border-gray-600'); } }
+    function clearFieldError(inputElement, errorElement) { if (errorElement) errorElement.textContent = ''; if (inputElement) { inputElement.classList.remove('border-red-500', 'ring-red-500'); inputElement.classList.add('border-gray-600'); } }
+    if (userForm) {
+        userForm.addEventListener('submit', function(event) {
+            let isValid = true;
+            const usernameInput = document.getElementById('username'); const passwordInput = document.getElementById('password'); const roleSelect = document.getElementById('role');
+            const usernameErrorJs = document.getElementById('username_error_js'); const passwordErrorJs = document.getElementById('password_error_js'); const roleErrorJs = document.getElementById('role_error_js');
+            clearFieldError(usernameInput, usernameErrorJs); clearFieldError(passwordInput, passwordErrorJs); clearFieldError(roleSelect, roleErrorJs);
+            if (action === 'Añadir' && usernameInput.value.trim() === '') { setFieldError(usernameInput, usernameErrorJs, 'El nombre de usuario es obligatorio.'); isValid = false; }
+            if (action === 'Añadir' && passwordInput.value.trim() === '') { setFieldError(passwordInput, passwordErrorJs, 'La contraseña es obligatoria.'); isValid = false;
+            } else if (passwordInput.value.trim() !== '' && passwordInput.value.length < 6) { setFieldError(passwordInput, passwordErrorJs, 'La contraseña debe tener al menos 6 caracteres.'); isValid = false; }
+            if (roleSelect.value === '') { setFieldError(roleSelect, roleErrorJs, 'El rol es obligatorio.'); isValid = false; }
+            if (!isValid) event.preventDefault();
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-brand-primary">Gestionar Mesas</h1>
+</div>
+
+<div class="bg-gray-800 p-6 rounded-lg shadow-md mb-8">
+    <h2 class="text-xl font-semibold text-orange-400 mb-4">Añadir Nueva Mesa</h2>
+    <form method="POST" action="{{ add_form_action }}" id="addTableForm" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start md:items-end">
+            <div>
+                <label for="add_number" class="block text-sm font-medium text-gray-300 mb-1">Número de Mesa</label>
+                <input type="number" name="number" id="add_number" min="1"
+                       value="{{ form_data_add.get('number', '') }}" required
+                       class="mt-1 block w-full px-3 py-2 border {% if errors_add and (errors_add.number_add or errors_add.general_add) %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                <span id="add_number_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors_add.get('number_add_err_msg', errors_add.get('number_add', '')) }}</span>
+            </div>
+            <div>
+                <label for="add_capacity" class="block text-sm font-medium text-gray-300 mb-1">Capacidad</label>
+                <input type="number" name="capacity" id="add_capacity" min="1"
+                       value="{{ form_data_add.get('capacity', '') }}" required
+                       class="mt-1 block w-full px-3 py-2 border {% if errors_add and (errors_add.capacity_add or errors_add.general_add) %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                <span id="add_capacity_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors_add.get('capacity_add_err_msg', errors_add.get('capacity_add','')) }}</span>
+            </div>
+            <div class="md:pt-7">
+                <button type="submit" class="btn btn-orange px-4 py-2 w-full md:w-auto">Añadir Mesa</button>
+            </div>
+        </div>
+        {% if errors_add and errors_add.get('general_add_err_msg') %}
+             <p class="text-red-400 text-sm mt-2">{{ errors_add.general_add_err_msg }}</p>
+        {% elif errors_add and errors_add.get('general_add') %}
+             <p class="text-red-400 text-sm mt-2">{{ errors_add.general_add }}</p>
+        {% endif %}
+    </form>
+</div>
+
+<h2 class="text-2xl font-semibold text-orange-400 mb-3 mt-10 border-b-2 border-gray-700 pb-2">Mesas Existentes</h2>
+<div class="bg-gray-800 shadow-md rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-700">
+        <thead class="bg-gray-700">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Número</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Capacidad</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Estado Actual</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-gray-800 divide-y divide-gray-700">
+            {% for table_item in pagination.items %}
+            <tr class="hover:bg-gray-700">
+                {% if show_edit_form_for_id == table_item.id %}
+                <form method="POST" action="{{ edit_form_action }}" id="editTableForm_{{ table_item.id }}" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+                    
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="number" name="number" id="edit_number_{{ table_item.id }}" value="{{ form_data_edit.get('number', table_item.number) }}" min="1" required
+                               class="w-24 px-2 py-1 border {% if errors_edit and (errors_edit.number_edit or errors_edit.general_edit) %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                        <span id="edit_number_error_js_{{ table_item.id }}" class="text-red-400 text-xs mt-1 h-4 block">{{ errors_edit.get('number_edit', '') }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <input type="number" name="capacity" id="edit_capacity_{{ table_item.id }}" value="{{ form_data_edit.get('capacity', table_item.capacity) }}" min="1" required
+                               class="w-24 px-2 py-1 border {% if errors_edit and (errors_edit.capacity_edit or errors_edit.general_edit) %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md focus:ring-orange-500 focus:border-orange-500">
+                        <span id="edit_capacity_error_js_{{ table_item.id }}" class="text-red-400 text-xs mt-1 h-4 block">{{ errors_edit.get('capacity_edit', '') }}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 align-top pt-5">{{ table_item.status }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center align-top pt-4">
+                        <button type="submit" class="btn btn-orange px-3 py-1 text-xs mr-2">Guardar</button>
+                        <a href="{{ url_for('admin.manage_tables_view', page=pagination.page) }}" class="btn btn-black px-3 py-1 text-xs">Cancelar</a>
+                         {% if errors_edit and errors_edit.get('general_edit') %}<span class="block text-red-400 text-xs mt-1">{{ errors_edit.general_edit }}</span>{% endif %}
+                    </td>
+                </form>
+                {% else %}
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{{ table_item.number }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ table_item.capacity }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ table_item.status }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                    <a href="{{ url_for('admin.edit_table_form_prep', table_id=table_item.id, page=pagination.page) }}" class="text-orange-400 hover:text-orange-300 mr-3">Editar</a>
+                    {% if table_item.status == 'Vacía' and not table_item.orders %}
+                    <form action="{{ url_for('admin.delete_table', table_id=table_item.id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Estás seguro de que quieres eliminar la Mesa {{ table_item.number }}?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+                        <input type="hidden" name="page" value="{{ pagination.page }}">
+                        <button type="submit" class="text-red-400 hover:text-red-300">Eliminar</button>
+                    </form>
+                    {% else %}
+                    <span class="text-gray-500 text-xs italic" title="La mesa debe estar 'Vacía' y sin pedidos asociados para ser eliminada.">(No eliminable)</span>
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No hay mesas configuradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-6 flex justify-center">
+    <nav class="flex rounded-md shadow">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin.manage_tables_view', page=pagination.prev_num) }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-600 bg-gray-800 text-sm font-medium text-gray-300 hover:bg-gray-700">
+                <span>Anterior</span>
+            </a>
+        {% else %}
+            <span class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-600 bg-gray-900 text-sm font-medium text-gray-500 cursor-not-allowed">
+                <span>Anterior</span>
+            </span>
+        {% endif %}
+        
+        <span class="relative inline-flex items-center px-4 py-2 border-t border-b border-gray-600 bg-gray-800 text-sm font-medium text-gray-300">
+            Página {{ pagination.page }} de {{ pagination.pages }}
+        </span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin.manage_tables_view', page=pagination.next_num) }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-600 bg-gray-800 text-sm font-medium text-gray-300 hover:bg-gray-700">
+                <span>Siguiente</span>
+            </a>
+        {% else %}
+            <span class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-600 bg-gray-900 text-sm font-medium text-gray-500 cursor-not-allowed">
+                <span>Siguiente</span>
+            </span>
+        {% endif %}
+    </nav>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// El script de validación JS que ya tenías va aquí, no necesita cambios.
+document.addEventListener('DOMContentLoaded', function() {
+    function setFieldError(inputElement, errorElement, message) {
+        if (errorElement) errorElement.textContent = message;
+        if (inputElement) {
+            inputElement.classList.add('border-red-500', 'ring-red-500');
+            inputElement.classList.remove('border-gray-600');
+        }
+    }
+    function clearFieldError(inputElement, errorElement) {
+        if (errorElement) errorElement.textContent = '';
+        if (inputElement) {
+            inputElement.classList.remove('border-red-500', 'ring-red-500');
+            inputElement.classList.add('border-gray-600');
+        }
+    }
+    const addTableForm = document.getElementById('addTableForm');
+    if (addTableForm) {
+        addTableForm.addEventListener('submit', function(event) {
+            let isValid = true;
+            const numberInput = document.getElementById('add_number');
+            const capacityInput = document.getElementById('add_capacity');
+            const numberErrorJs = document.getElementById('add_number_error_js');
+            const capacityErrorJs = document.getElementById('add_capacity_error_js');
+            clearFieldError(numberInput, numberErrorJs);
+            clearFieldError(capacityInput, capacityErrorJs);
+            if (numberInput.value.trim() === '') {
+                setFieldError(numberInput, numberErrorJs, 'El número es obligatorio.'); isValid = false;
+            } else if (isNaN(parseInt(numberInput.value)) || parseInt(numberInput.value) <= 0) {
+                setFieldError(numberInput, numberErrorJs, 'Debe ser un número positivo.'); isValid = false;
+            }
+            if (capacityInput.value.trim() === '') {
+                setFieldError(capacityInput, capacityErrorJs, 'La capacidad es obligatoria.'); isValid = false;
+            } else if (isNaN(parseInt(capacityInput.value)) || parseInt(capacityInput.value) <= 0) {
+                setFieldError(capacityInput, capacityErrorJs, 'Debe ser un número positivo.'); isValid = false;
+            }
+            if (!isValid) event.preventDefault();
+        });
+    }
+    const editForms = document.querySelectorAll('form[id^="editTableForm_"]');
+    editForms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+            const tableId = form.id.split('_')[1];
+            const numberInput = document.getElementById(`edit_number_${tableId}`);
+            const capacityInput = document.getElementById(`edit_capacity_${tableId}`);
+            const numberErrorJs = document.getElementById(`edit_number_error_js_${tableId}`);
+            const capacityErrorJs = document.getElementById(`edit_capacity_error_js_${tableId}`);
+            clearFieldError(numberInput, numberErrorJs);
+            clearFieldError(capacityInput, capacityErrorJs);
+            if (numberInput.value.trim() === '') {
+                setFieldError(numberInput, numberErrorJs, 'El número es obligatorio.'); isValid = false;
+            } else if (isNaN(parseInt(numberInput.value)) || parseInt(numberInput.value) <= 0) {
+                setFieldError(numberInput, numberErrorJs, 'Debe ser un número positivo.'); isValid = false;
+            }
+            if (capacityInput.value.trim() === '') {
+                setFieldError(capacityInput, capacityErrorJs, 'La capacidad es obligatoria.'); isValid = false;
+            } else if (isNaN(parseInt(capacityInput.value)) || parseInt(capacityInput.value) <= 0) {
+                setFieldError(capacityInput, capacityErrorJs, 'Debe ser un número positivo.'); isValid = false;
+            }
+            if (!isValid) event.preventDefault();
+        });
+    });
+});
+</script>
+{% endblock %}

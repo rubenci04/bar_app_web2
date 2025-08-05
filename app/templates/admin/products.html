@@ -1,0 +1,154 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+    <h1 class="text-3xl font-bold text-brand-primary">Gestionar Productos</h1>
+    <a href="{{ url_for('admin.add_product') }}" class="btn btn-orange px-4 py-2 whitespace-nowrap">Añadir Nuevo Producto</a>
+</div>
+
+{# Formulario de Búsqueda y Filtro #}
+<div class="bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md mb-8">
+    <form method="GET" action="{{ url_for('admin.list_products') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+        <div class="sm:col-span-1">
+            <label for="search_name" class="block text-sm font-medium text-gray-300 mb-1">Buscar por Nombre</label>
+            <input type="text" name="search_name" id="search_name" value="{{ search_name_value or '' }}"
+                   class="mt-1 block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
+                   placeholder="Nombre del producto...">
+        </div>
+        <div class="sm:col-span-1">
+            <label for="search_category" class="block text-sm font-medium text-gray-300 mb-1">Filtrar por Categoría</label>
+            <select name="search_category" id="search_category"
+                    class="mt-1 block w-full px-3 py-2.5 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+                <option value="">Todas las categorías</option>
+                {% for category_option in distinct_categories_for_filter %}
+                    <option value="{{ category_option }}" {% if search_category_value == category_option %}selected{% endif %}>
+                        {{ category_option }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="sm:col-span-1 flex flex-col sm:flex-row gap-2 pt-3 sm:pt-0">
+            <button type="submit" class="btn btn-orange px-4 py-2 w-full sm:w-auto">Buscar/Filtrar</button>
+            <a href="{{ url_for('admin.list_products') }}" class="btn btn-black px-4 py-2 w-full sm:w-auto text-center">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+{# Mostrar productos agrupados por categoría (de la página actual de paginación) #}
+{% if products_by_category %}
+    {% for category, products_in_cat in products_by_category.items() %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-semibold text-orange-400 mb-3 border-b-2 border-gray-700 pb-2">{{ category }}</h2>
+        {% if products_in_cat %}
+        <div class="bg-gray-800 shadow-md rounded-lg overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-700">
+                <thead class="bg-gray-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Precio</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Stock</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-gray-800 divide-y divide-gray-700">
+                    {% for product in products_in_cat %}
+                    <tr class="hover:bg-gray-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">{{ product.name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-right">${{ "%.2f"|format(product.price) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-right">{{ product.stock }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                            <a href="{{ url_for('admin.edit_product', product_id=product.id) }}" class="text-orange-400 hover:text-orange-300 mr-3">Editar</a>
+                            <form action="{{ url_for('admin.delete_product', product_id=product.id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Estás seguro de que quieres eliminar {{ product.name }}?');">
+                                <button type="submit" class="text-red-400 hover:text-red-300">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %} 
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+             {# Este bloque se alcanzaría si una categoría está en products_by_category pero su lista de productos está vacía. #}
+             {# Con la lógica actual de la ruta, esto no debería suceder, ya que solo añadimos categorías si tienen productos. #}
+             {# <p class="text-sm text-gray-500">No hay productos en esta categoría con los filtros actuales.</p> #}
+        {% endif %}
+    </div>
+    {% endfor %} 
+{% else %}
+    <p class="text-center text-gray-400 text-lg p-8 bg-gray-800 rounded-md">
+        No se encontraron productos que coincidan con tus criterios de búsqueda.
+        <a href="{{ url_for('admin.list_products') }}" class="text-orange-400 hover:underline">Ver todos los productos</a> o 
+        <a href="{{ url_for('admin.add_product') }}" class="text-orange-400 hover:underline">añade uno nuevo</a>.
+    </p>
+{% endif %}
+
+{# Controles de Paginación #}
+{# Asegúrate de que la variable 'pagination' se pasa desde la ruta #}
+{% if pagination and pagination.pages > 1 %}
+<nav aria-label="Paginación de productos" class="mt-8 flex justify-center">
+    <ul class="inline-flex items-center -space-x-px">
+        {# Botón Anterior #}
+        {% if pagination.has_prev %}
+        <li>
+            <a href="{{ url_for('admin.list_products', page=pagination.prev_num, search_name=search_name_value, search_category=search_category_value) }}"
+               class="py-2 px-3 ml-0 leading-tight text-gray-400 bg-gray-700 border border-gray-600 rounded-l-lg hover:bg-gray-600 hover:text-orange-400">
+                <span class="sr-only">Anterior</span>
+                &laquo;
+            </a>
+        </li>
+        {% else %}
+        <li>
+            <span class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-gray-800 border border-gray-600 rounded-l-lg cursor-not-allowed">
+                <span class="sr-only">Anterior</span>
+                &laquo;
+            </span>
+        </li>
+        {% endif %}
+
+        {# Números de Página #}
+        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+                {% if pagination.page == page_num %}
+                <li>
+                    <span aria-current="page"
+                          class="py-2 px-3 leading-tight text-orange-500 bg-gray-600 border border-gray-500 hover:bg-gray-500 hover:text-orange-300 z-10">
+                        {{ page_num }}
+                    </span>
+                </li>
+                {% else %}
+                <li>
+                    <a href="{{ url_for('admin.list_products', page=page_num, search_name=search_name_value, search_category=search_category_value) }}"
+                       class="py-2 px-3 leading-tight text-gray-400 bg-gray-700 border border-gray-600 hover:bg-gray-600 hover:text-orange-400">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% endif %}
+            {% else %}
+                <li><span class="py-2 px-3 leading-tight text-gray-500 bg-gray-700 border border-gray-600">...</span></li>
+            {% endif %}
+        {% endfor %}
+
+        {# Botón Siguiente #}
+        {% if pagination.has_next %}
+        <li>
+            <a href="{{ url_for('admin.list_products', page=pagination.next_num, search_name=search_name_value, search_category=search_category_value) }}"
+               class="py-2 px-3 leading-tight text-gray-400 bg-gray-700 border border-gray-600 rounded-r-lg hover:bg-gray-600 hover:text-orange-400">
+                <span class="sr-only">Siguiente</span>
+                &raquo;
+            </a>
+        </li>
+        {% else %}
+        <li>
+            <span class="py-2 px-3 leading-tight text-gray-500 bg-gray-800 border border-gray-600 rounded-r-lg cursor-not-allowed">
+                <span class="sr-only">Siguiente</span>
+                &raquo;
+            </span>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+<p class="text-center text-sm text-gray-500 mt-2">
+    Página {{ pagination.page }} de {{ pagination.pages }}. Mostrando {{ pagination.items|length }} de {{ pagination.total }} productos que coinciden con el filtro.
+</p>
+{% endif %}
+
+{% endblock %}

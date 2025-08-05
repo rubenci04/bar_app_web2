@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-3xl font-bold text-brand-primary">Pedidos para Llevar</h1>
+    <a href="{{ url_for('mozo.new_takeaway_order') }}" class="btn btn-orange px-4 py-2">Nuevo Pedido</a>
+</div>
+
+<div class="bg-gray-800 shadow-md rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-700">
+        <thead class="bg-gray-700">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Cliente</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Total</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">Acciones</th>
+            </tr>
+        </thead>
+        <tbody class="bg-gray-800 divide-y divide-gray-700">
+            {% for order in orders %}
+            <tr class="hover:bg-gray-700">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">#{{ order.id }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ order.customer_name }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full 
+                        {% if order.status == 'Pendiente' %}bg-yellow-500 text-yellow-900{% endif %}
+                        {% if order.status == 'Pagado' %}bg-green-500 text-green-900{% endif %}
+                        {% if order.status == 'Cancelado' or order.status == 'Venta Anulada' %}bg-red-500 text-red-900{% endif %}
+                    ">{{ order.status }}</span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">${{ "%.2f"|format(order.total_amount if order.total_amount is not none else 0.0) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                    <a href="{{ url_for('mozo.takeaway_order_detail', order_id=order.id) }}" class="text-orange-400 hover:text-orange-300 mr-3">Ver/Editar</a>
+                    {% if order.status in ['Pagado', 'Cancelado', 'Venta Anulada'] %}
+                    <form action="{{ url_for('mozo.delete_takeaway_order', order_id=order.id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Estás seguro de que quieres eliminar este pedido de la lista? Esta acción es permanente.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
+                        <button type="submit" class="text-red-400 hover:text-red-300">Eliminar</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No hay pedidos para llevar.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

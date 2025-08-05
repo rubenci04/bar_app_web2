@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-8 text-brand-primary">Panel de Administrador</h1>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <a href="{{ url_for('admin.list_products') }}" 
+       class="block p-6 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-700 transition-all duration-300 ease-in-out transform hover:-translate-y-1">
+        <h2 class="text-xl font-semibold text-orange-400">Gestionar Productos</h2>
+        <p class="text-gray-300 mt-2">Añadir, editar o eliminar productos del menú.</p>
+    </a>
+    <a href="{{ url_for('admin.sales_log') }}" 
+       class="block p-6 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-700 transition-all duration-300 ease-in-out transform hover:-translate-y-1">
+        <h2 class="text-xl font-semibold text-orange-400">Ver Registro de Ventas</h2>
+        <p class="text-gray-300 mt-2">Revisar ventas pasadas y filtrar por fecha.</p>
+    </a>
+    <a href="{{ url_for('mozo.tables_view') }}"
+       class="block p-6 bg-gray-800 rounded-lg shadow-lg hover:shadow-xl hover:bg-gray-700 transition-all duration-300 ease-in-out transform hover:-translate-y-1">
+        <h2 class="text-xl font-semibold text-orange-400">Vista de Mesas (Mozo)</h2>
+        <p class="text-gray-300 mt-2">Acceder a la interfaz de gestión de mesas.</p>
+    </a>
+</div>
+{% endblock %}

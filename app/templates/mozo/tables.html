@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+{% block content %}
+<h1 class="text-3xl font-bold mb-8 text-brand-primary">Mesas del Restaurante</h1>
+
+{# Verificar si tables_data tiene elementos antes de intentar el bucle #}
+{% if tables_data %} 
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+    {# Iterar sobre tables_data, que es una lista de diccionarios #}
+    {% for table_info in tables_data %} 
+    <a href="{{ url_for('mozo.table_detail_view', table_id=table_info.id) }}"
+       class="p-4 border rounded-lg shadow-md text-center 
+              table-card-{{ table_info.status.replace(' ', '-') }} 
+              hover:shadow-lg hover:ring-2 hover:ring-orange-500 transition-all duration-200 ease-in-out transform hover:-translate-y-0.5">
+        <div class="text-2xl font-bold">Mesa {{ table_info.number }}</div>
+        <div class="text-sm mt-1">Capacidad: {{ table_info.capacity }}</div>
+        <div class="text-sm mt-1 font-semibold">{{ table_info.status }}</div>
+        {# Mostrar total del pedido activo si la mesa está Ocupada #}
+        {% if table_info.status == 'Ocupada' %}
+            {% if table_info.total_pedido_activo > 0 %}
+                <div class="text-sm mt-1 text-yellow-400">Total: ${{ "%.2f"|format(table_info.total_pedido_activo) }}</div>
+            {% else %}
+                 <div class="text-sm mt-1 text-gray-400">(Pedido vacío)</div>
+            {% endif %}
+        {% elif table_info.status == 'Pendiente Pago' %}
+            {# Si está pendiente pago, el total_pedido_activo podría reflejar el pedido que se pagó si se busca así en la ruta #}
+            {# Como la ruta actual solo busca pedidos 'Pendiente', este total sería 0 para 'Pendiente Pago' #}
+            {# Para mostrar el total del pedido pagado, se necesitaría lógica adicional en la ruta 'tables_view' #}
+            {# Por ahora, solo indicamos el estado. #}
+             <div class="text-sm mt-1 text-green-400">(Pago Registrado)</div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+    {# Este mensaje se mostrará si tables_data está vacío #}
+    <p class="col-span-full text-center text-gray-400 text-lg p-8 bg-gray-800 rounded-md">No se encontraron mesas. Contacta al administrador si crees que esto es un error o añade mesas desde el panel de administración.</p>
+{% endif %}
+
+{% endblock %}
