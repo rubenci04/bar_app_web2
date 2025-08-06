@@ -1,12 +1,13 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, get_flashed_messages
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from .models import Table, Product, Order, OrderItem
 from . import db
 from .utils import mozo_required
-from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import selectinload
 from collections import OrderedDict
 from datetime import datetime
 from flask_wtf.csrf import generate_csrf
 
+# CORRECCIÓN: Se elimina template_folder='templates'
 mozo_bp = Blueprint('mozo', __name__)
 
 def get_products_by_category():
@@ -75,12 +76,8 @@ def add_item_to_order(order_id):
     
     product.stock -= quantity
     
-    # --- LA SOLUCIÓN DEFINITIVA ---
-    # 1. Hacemos flush para enviar los cambios a la "sala de espera" de la BD.
     db.session.flush()
-    # 2. Refrescamos el objeto 'order' para que su lista 'items' se actualice AHORA MISMO.
     db.session.refresh(order)
-    # 3. AHORA SÍ, calculamos el total con la lista de ítems 100% actualizada.
     order.calculate_total()
     
     db.session.commit()
@@ -104,19 +101,14 @@ def remove_item_from_order(item_id):
         product.stock += order_item.quantity
     
     db.session.delete(order_item)
-
-    # --- LA MISMA SOLUCIÓN AL QUITAR UN ÍTEM ---
     db.session.flush()
     db.session.refresh(order)
     order.calculate_total()
-
     db.session.commit()
 
     return jsonify({
         'success': True, 'message': 'Ítem eliminado.', 'order_total': order.total_amount
     })
-
-# ... (El resto del código no cambia) ...
 
 @mozo_bp.route('/order/<int:order_id>/mark_paid', methods=['POST'])
 @mozo_required
