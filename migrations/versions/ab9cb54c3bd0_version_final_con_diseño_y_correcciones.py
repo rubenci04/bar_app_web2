@@ -1,8 +1,8 @@
-"""Version final
+"""Version final con diseño y correcciones
 
-Revision ID: e322639cc0c9
+Revision ID: ab9cb54c3bd0
 Revises: 
-Create Date: 2025-08-06 11:40:54.716255
+Create Date: 2025-08-06 10:52:51.659152
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e322639cc0c9'
+revision = 'ab9cb54c3bd0'
 down_revision = None
 branch_labels = None
 depends_on = None
