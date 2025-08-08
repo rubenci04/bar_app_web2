@@ -1,108 +1,82 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-brand-primary">{{ action }} Producto</h1>
-<div class="bg-gray-800 p-8 rounded-lg shadow-xl max-w-2xl mx-auto">
-<form method="POST" action="{{ form_action }}">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token_value }}">
-        <div class="space-y-6">
+<div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold text-slate-100 mb-6">{{ action }} Producto</h1>
+    <div class="bg-slate-800 p-8 rounded-lg shadow-xl">
+        <form method="POST" action="{{ url_for(request.endpoint, product_id=product.id) if product else url_for(request.endpoint) }}" id="productForm" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-300 mb-1">Nombre del Producto</label>
-                <input type="text" name="name" id="name" value="{{ product.name if product and product.name is not none else '' }}" required
-                       class="mt-1 block w-full px-4 py-2 border {% if errors and errors.name %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500" placeholder="Ej: Milanesa Napolitana">
-                <span id="name_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.name if errors and errors.name else '' }}</span>
+                <label for="name" class="block text-sm font-medium text-slate-300">Nombre del Producto</label>
+                <input type="text" name="name" id="name" value="{{ product.name or '' }}" required
+                       class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:ring-2 focus:ring-amber-500 transition" placeholder="Ej: Milanesa Napolitana">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label for="price" class="block text-sm font-medium text-gray-300 mb-1">Precio ($)</label>
-                    <input type="text" name="price" id="price" value="{{ product.price if product and product.price is not none else '' }}" required
-                           class="mt-1 block w-full px-4 py-2 border {% if errors and errors.price %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500" placeholder="Ej: 5500.00">
-                    <span id="price_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.price if errors and errors.price else '' }}</span>
+                    <label for="price" class="block text-sm font-medium text-slate-300">Precio ($)</label>
+                    <input type="text" inputmode="decimal" name="price" id="price" value="{{ '%.2f'|format(product.price) if product else '' }}" required
+                           class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:ring-2 focus:ring-amber-500 transition" placeholder="Ej: 5500.00">
                 </div>
                 <div>
-                    <label for="type" class="block text-sm font-medium text-gray-300 mb-1">Categoría (Tipo)</label>
-                    <select name="type" id="type" required
-                            class="mt-1 block w-full px-4 py-2.5 border {% if errors and errors.type %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
-                        <option value="" disabled {% if not (product.type if product else '') %}selected{% endif %}>Selecciona una categoría...</option>
-                        {% set current_type_selected = product.type if product and product.type is not none else '' %}
-                        {% for category_option in categories %} 
-                            <option value="{{ category_option }}" {% if current_type_selected == category_option %}selected{% endif %}>{{ category_option }}</option>
-                        {% endfor %}
-                        <option value="Otro" {% if current_type_selected == 'Otro' %}selected{% endif %}>Otra (especificar abajo)</option>
-                    </select>
-                    <span id="type_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.type if errors and errors.type else '' }}</span>
+                    <label for="stock" class="block text-sm font-medium text-slate-300">Stock</label>
+                    <input type="number" inputmode="numeric" name="stock" id="stock" min="0" value="{{ product.stock if product is not none else '0' }}" required
+                           class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:ring-2 focus:ring-amber-500 transition" placeholder="Ej: 50">
                 </div>
-            </div>
-
-            <div id="new_category_div" class="{% if current_type_selected != 'Otro' %}hidden{% endif %}">
-                <label for="new_category" class="block text-sm font-medium text-gray-300 mb-1">Nueva Categoría (si seleccionó 'Otra')</label>
-                <input type="text" name="new_category" id="new_category" value="{{ product.new_category if product and product.new_category is not none else '' }}"
-                       class="mt-1 block w-full px-4 py-2 border {% if errors and errors.new_category %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500" placeholder="Nombre de la nueva categoría">
-                <span id="new_category_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.new_category if errors and errors.new_category else '' }}</span>
             </div>
 
             <div>
-                <label for="stock" class="block text-sm font-medium text-gray-300 mb-1">Stock</label>
-                <input type="number" name="stock" id="stock" min="0" value="{{ product.stock if product and product.stock is not none else '0' }}" required
-                       class="mt-1 block w-full px-4 py-2 border {% if errors and errors.stock %}border-red-500 ring-red-500{% else %}border-gray-600{% endif %} bg-gray-700 text-gray-200 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 sm:text-sm placeholder-gray-500" placeholder="Ej: 50">
-                <span id="stock_error_js" class="text-red-400 text-xs mt-1 h-4 block">{{ errors.stock if errors and errors.stock else '' }}</span>
+                <label for="type" class="block text-sm font-medium text-slate-300">Categoría</label>
+                <select name="type" id="type" required
+                        class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:ring-2 focus:ring-amber-500 transition">
+                    <option value="" disabled {% if not product %}selected{% endif %}>Selecciona una categoría...</option>
+                    {% for category_option in categories %} 
+                        <option value="{{ category_option }}" {% if product and product.type == category_option %}selected{% endif %}>{{ category_option }}</option>
+                    {% endfor %}
+                    <option value="Otro">Otra (especificar)</option>
+                </select>
             </div>
-        </div>
-        <div class="flex justify-end space-x-4 mt-10"> 
-            <a href="{{ url_for('admin.list_products') }}" class="btn btn-black px-6 py-2.5 text-sm">Cancelar</a>
-            <button type="submit" class="btn btn-orange px-6 py-2.5 text-sm">{{ action }} Producto</button>
-        </div>
-    </form>
+
+            <div id="new_category_div" class="hidden">
+                <label for="new_category" class="block text-sm font-medium text-slate-300">Nombre de la Nueva Categoría</label>
+                <input type="text" name="new_category" id="new_category"
+                       class="mt-1 block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-100 focus:ring-2 focus:ring-amber-500 transition" placeholder="Ej: Tragos de Autor">
+            </div>
+
+            <div class="flex justify-end space-x-4 pt-4">
+                <a href="{{ url_for('admin.products') }}" class="px-4 py-2 rounded-lg font-semibold bg-slate-600 hover:bg-slate-500 transition-colors text-white">Cancelar</a>
+                <button type="submit" class="px-4 py-2 rounded-lg font-semibold bg-amber-600 hover:bg-amber-700 transition-colors text-white">{{ action }} Producto</button>
+            </div>
+        </form>
+    </div>
 </div>
-{# ... (script JS de validación sin cambios) ... #}
+{% endblock %}
+
+{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const typeSelect = document.getElementById('type');
-        const newCategoryDiv = document.getElementById('new_category_div');
-        const newCategoryInput = document.getElementById('new_category');
-        const productForm = document.getElementById('productForm');
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('type');
+    const newCategoryDiv = document.getElementById('new_category_div');
+    const newCategoryInput = document.getElementById('new_category');
 
-        function toggleNewCategoryField() {
-            if (!typeSelect || !newCategoryDiv || !newCategoryInput) return; 
-            if (typeSelect.value === 'Otro') {
-                newCategoryDiv.classList.remove('hidden');
-                newCategoryInput.required = true; 
-            } else {
-                newCategoryDiv.classList.add('hidden');
-                newCategoryInput.required = false;
-            }
-        }
+    function toggleNewCategoryField() {
+        if (!typeSelect || !newCategoryDiv || !newCategoryInput) return;
         
-        if(typeSelect) {
-            typeSelect.addEventListener('change', toggleNewCategoryField);
-            toggleNewCategoryField(); 
+        if (typeSelect.value === 'Otro') {
+            newCategoryDiv.classList.remove('hidden');
+            newCategoryInput.required = true;
+        } else {
+            newCategoryDiv.classList.add('hidden');
+            newCategoryInput.required = false;
+            newCategoryInput.value = ''; // Limpiar el campo si se cambia de categoría
         }
-
-        if (productForm) {
-            productForm.addEventListener('submit', function(event) {
-                let isValid = true;
-                const errorSpans = {
-                    name: document.getElementById('name_error_js'), price: document.getElementById('price_error_js'),
-                    type: document.getElementById('type_error_js'), new_category: document.getElementById('new_category_error_js'),
-                    stock: document.getElementById('stock_error_js')
-                };
-                for (const key in errorSpans) { if (errorSpans[key]) errorSpans[key].textContent = ''; }
-                document.querySelectorAll('input.border-red-500, select.border-red-500').forEach(el => {
-                    el.classList.remove('border-red-500', 'ring-red-500'); el.classList.add('border-gray-600');
-                });
-                const nameInput = document.getElementById('name');
-                if (nameInput.value.trim() === '') { if(errorSpans.name) errorSpans.name.textContent = 'El nombre es obligatorio.'; nameInput.classList.add('border-red-500', 'ring-red-500'); isValid = false; }
-                const priceInput = document.getElementById('price');
-                if (priceInput.value.trim() === '') { if(errorSpans.price) errorSpans.price.textContent = 'El precio es obligatorio.'; priceInput.classList.add('border-red-500', 'ring-red-500'); isValid = false;
-                } else if (isNaN(parseFloat(priceInput.value)) || parseFloat(priceInput.value) < 0) { if(errorSpans.price) errorSpans.price.textContent = 'El precio debe ser un número positivo.'; priceInput.classList.add('border-red-500', 'ring-red-500'); isValid = false; }
-                if (typeSelect.value === '') { if(errorSpans.type) errorSpans.type.textContent = 'La categoría es obligatoria.'; typeSelect.classList.add('border-red-500', 'ring-red-500'); isValid = false;
-                } else if (typeSelect.value === 'Otro' && newCategoryInput.value.trim() === '') { if(errorSpans.new_category) errorSpans.new_category.textContent = 'Debe especificar la nueva categoría.'; newCategoryInput.classList.add('border-red-500', 'ring-red-500'); isValid = false; }
-                const stockInput = document.getElementById('stock');
-                if (stockInput.value.trim() === '') { if(errorSpans.stock) errorSpans.stock.textContent = 'El stock es obligatorio.'; stockInput.classList.add('border-red-500', 'ring-red-500'); isValid = false;
-                } else if (isNaN(parseInt(stockInput.value)) || parseInt(stockInput.value) < 0) { if(errorSpans.stock) errorSpans.stock.textContent = 'El stock debe ser un número entero positivo o cero.'; stockInput.classList.add('border-red-500', 'ring-red-500'); isValid = false; }
-                if (!isValid) event.preventDefault(); 
-            });
-        }
-    });
+    }
+    
+    if(typeSelect) {
+        typeSelect.addEventListener('change', toggleNewCategoryField);
+        // Llamada inicial para establecer el estado correcto al cargar la página (para editar)
+        toggleNewCategoryField(); 
+    }
+});
 </script>
 {% endblock %}

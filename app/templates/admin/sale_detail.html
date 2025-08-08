@@ -2,74 +2,77 @@
 
 {% block content %}
 <div class="flex justify-between items-center mb-6">
-    <h1 class="text-3xl font-bold text-brand-primary">Detalle de Venta - Pedido #{{ sale_order.id }}</h1>
-    {# El botón Volver ahora incluye los parámetros de paginación y filtro de fecha #}
-    <a href="{{ url_for('admin.sales_log', page=return_page, date=return_date_filter if return_date_filter else None) }}" class="btn btn-black px-4 py-2">Volver al Registro de Ventas</a>
+    <h1 class="text-3xl font-bold text-slate-100">Detalle de Venta - Pedido #{{ sale_order.id }}</h1>
+    <a href="{{ url_for('admin.sales_log', page=return_page, date=return_date_filter if return_date_filter else None) }}" class="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-700 hover:bg-slate-600 transition-colors">
+        <i class="fa-solid fa-arrow-left mr-2"></i>Volver al Registro
+    </a>
 </div>
 
-<div class="bg-gray-800 p-6 rounded-lg shadow-xl">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+<div class="bg-slate-800 p-6 rounded-lg shadow-xl">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 mb-6">
         <div>
-            <h2 class="text-xl font-semibold text-orange-400 mb-2">Información del Pedido</h2>
-            <p class="text-gray-300"><strong class="text-gray-200">ID Pedido:</strong> {{ sale_order.id }}</p>
-            <p class="text-gray-300"><strong class="text-gray-200">Tipo:</strong> {{ sale_order.type|capitalize }}</p>
-            {% if sale_order.type == 'mesa' and sale_order.table_assigned %}
-            <p class="text-gray-300"><strong class="text-gray-200">Mesa:</strong> #{{ sale_order.table_assigned.number }}</p>
-            {% elif sale_order.type == 'llevar' %}
-            <p class="text-gray-300"><strong class="text-gray-200">Cliente:</strong> {{ sale_order.customer_name or 'No especificado' }}</p>
-            {% endif %}
-            <p class="text-gray-300"><strong class="text-gray-200">Fecha Creación:</strong> {{ sale_order.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-            <p class="text-gray-300"><strong class="text-gray-200">Última Actualización (Pago/Anulación):</strong> {{ sale_order.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
-            <p class="text-gray-300"><strong class="text-gray-200">Estado:</strong> 
-                <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                {% if sale_order.status == 'Pagado' %}bg-green-500 text-green-900{% endif %}
-                {% if sale_order.status == 'Venta Anulada' %}bg-red-500 text-red-900{% endif %}
-                {% if sale_order.status == 'Pendiente' %}bg-yellow-500 text-yellow-900{% endif %}
-                {% if sale_order.status == 'Cancelado' %}bg-gray-500 text-gray-900{% endif %}
-                ">{{ sale_order.status }}</span>
-            </p>
+            <h2 class="text-xl font-semibold text-amber-500 mb-3">Información del Pedido</h2>
+            <div class="space-y-2 text-sm">
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">ID Pedido:</strong> #{{ sale_order.id }}</p>
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Tipo:</strong> {{ sale_order.type }}</p>
+                {% if sale_order.type == 'Mesa' and sale_order.table_assigned %}
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Mesa:</strong> #{{ sale_order.table_assigned.number }}</p>
+                {% elif sale_order.type == 'Para Llevar' %}
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Cliente:</strong> {{ sale_order.customer_name or 'No especificado' }}</p>
+                {% endif %}
+            </div>
         </div>
-        {% if sale_order.general_notes %}
         <div>
-            <h2 class="text-xl font-semibold text-orange-400 mb-2">Notas Generales del Pedido</h2>
-            <p class="text-gray-300 bg-gray-700 p-3 rounded-md whitespace-pre-wrap">{{ sale_order.general_notes }}</p>
+            <h2 class="text-xl font-semibold text-amber-500 mb-3">Detalles de la Transacción</h2>
+            <div class="space-y-2 text-sm">
+                 <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Fecha de Pago:</strong> {{ sale_order.updated_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Método de Pago:</strong> 
+                    <span class="font-semibold text-emerald-400">{{ sale_order.payment_method or 'No registrado' }}</span>
+                </p>
+                <p class="text-slate-300"><strong class="font-medium text-slate-100 w-28 inline-block">Estado:</strong> 
+                    <span class="px-2.5 py-1 text-xs font-semibold rounded-full 
+                        {% if sale_order.status == 'Pagado' %}bg-emerald-500/20 text-emerald-300
+                        {% elif sale_order.status == 'Venta Anulada' %}bg-red-500/20 text-red-300
+                        {% else %}bg-slate-500/20 text-slate-300{% endif %}">
+                        {{ sale_order.status }}
+                    </span>
+                </p>
+            </div>
         </div>
-        {% endif %}
     </div>
 
-    <h2 class="text-xl font-semibold text-orange-400 mb-3 mt-6 border-t border-gray-700 pt-4">Ítems del Pedido</h2>
+    <h2 class="text-xl font-semibold text-amber-500 mb-3 mt-8 border-t border-slate-700 pt-6">Ítems del Pedido</h2>
     {% if sale_order.items %}
-    <div class="overflow-x-auto bg-gray-750 rounded-lg shadow"> <table class="min-w-full divide-y divide-gray-600">
-            <thead class="bg-gray-700">
+    <div class="overflow-x-auto rounded-lg shadow"> 
+        <table class="min-w-full divide-y divide-slate-700">
+            <thead class="bg-slate-700/50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Producto</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Cantidad</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Precio Unit.</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Subtotal</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Producto</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Cantidad</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Precio Unit.</th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Subtotal</th>
                 </tr>
             </thead>
-            <tbody class="bg-gray-800 divide-y divide-gray-700">
+            <tbody class="bg-slate-800 divide-y divide-slate-700">
                 {% for item in sale_order.items %}
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-gray-100">{{ item.product.name if item.product else 'Producto no disponible' }}</div>
-                        {% if item.notes %}
-                        <div class="text-xs text-gray-400 italic whitespace-pre-wrap mt-1">Nota: {{ item.notes }}</div>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-300 text-right">{{ item.quantity }}</td>
-                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-300 text-right">${{ "%.2f"|format(item.unit_price) }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-100 text-right font-medium">${{ "%.2f"|format(item.subtotal) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-200">{{ item.product.name if item.product else 'Producto no disponible' }}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300 text-right">{{ item.quantity }}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-slate-300 text-right">${{ "%.2f"|format(item.unit_price) }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-100 text-right font-medium">${{ "%.2f"|format(item.subtotal) }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
+            <tfoot class="bg-slate-700/50">
+                <tr>
+                    <td colspan="3" class="px-6 py-3 text-right text-sm font-bold text-slate-100 uppercase">Total del Pedido:</td>
+                    <td class="px-6 py-3 text-right text-base font-bold text-amber-500">${{ "%.2f"|format(sale_order.total_amount) }}</td>
+                </tr>
+            </tfoot>
         </table>
     </div>
-    <div class="text-right mt-6 pr-6">
-        <p class="text-2xl font-bold text-gray-100">Total del Pedido: <span class="text-orange-400">${{ "%.2f"|format(sale_order.total_amount) }}</span></p>
-    </div>
     {% else %}
-    <p class="text-gray-400">Este pedido no tiene ítems registrados.</p>
+    <p class="text-slate-500 py-4 text-center">Este pedido no tiene ítems registrados.</p>
     {% endif %}
 
 </div>

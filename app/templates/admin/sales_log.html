@@ -1,120 +1,118 @@
 {% extends "layout.html" %}
 {% block content %}
-<h1 class="text-3xl font-bold mb-6 text-brand-primary">Registro de Ventas</h1>
+<h1 class="text-3xl font-bold mb-6 text-slate-100">Registro de Ventas</h1>
 
-<form method="GET" action="{{ url_for('admin.sales_log') }}" class="mb-6 bg-gray-800 p-4 rounded-lg shadow-md">
-    <div class="flex flex-col sm:flex-row items-end sm:space-x-4 space-y-3 sm:space-y-0">
-        <div class="flex-grow">
-            <label for="date" class="block text-sm font-medium text-gray-300 mb-1">Filtrar por Fecha:</label>
-            <input type="date" id="date" name="date" value="{{ date_filter if date_filter else '' }}"
-                   class="mt-1 block w-full px-3 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 sm:text-sm">
+<div class="bg-slate-800 p-4 rounded-lg shadow-md mb-6">
+    <form method="GET" action="{{ url_for('admin.sales_log') }}" class="flex flex-col sm:flex-row items-end gap-3">
+        <div class="flex-grow w-full sm:w-auto">
+            <label for="date" class="block text-sm font-medium text-slate-300 mb-1">Filtrar por Fecha</label>
+            <input type="date" id="date" name="date" value="{{ date_filter or '' }}"
+                   class="block w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-slate-200 focus:ring-2 focus:ring-amber-500 transition">
         </div>
-        <button type="submit" class="btn btn-orange px-4 py-2 w-full sm:w-auto">Filtrar</button>
+        <button type="submit" class="w-full sm:w-auto px-4 py-2 rounded-lg font-semibold bg-amber-600 hover:bg-amber-700 transition-colors text-white">Filtrar</button>
         {% if date_filter %}
-        <a href="{{ url_for('admin.sales_log') }}" class="btn btn-black px-4 py-2 w-full sm:w-auto text-center">Limpiar Filtro</a>
+        <a href="{{ url_for('admin.sales_log') }}" class="w-full sm:w-auto text-center px-4 py-2 rounded-lg font-semibold bg-slate-600 hover:bg-slate-500 transition-colors text-white">Limpiar</a>
         {% endif %}
-    </div>
-</form>
+    </form>
+</div>
 
-<div class="bg-gray-800 shadow-md rounded-lg overflow-x-auto mb-6">
-    <table class="min-w-full divide-y divide-gray-700">
-        <thead class="bg-gray-700">
+<div class="bg-slate-800 p-6 rounded-lg shadow-md mb-6">
+    <h2 class="text-xl font-semibold text-slate-100 mb-4">
+        Resumen de Ventas {% if date_filter %} del {{ date_filter }} {% else %} (Total Histórico) {% endif %}
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+        <div>
+            <p class="text-sm text-slate-400">Ventas en Mesas</p>
+            <p class="text-2xl font-bold text-emerald-400">${{ "%.2f"|format(total_sales_table) }}</p>
+        </div>
+        <div>
+            <p class="text-sm text-slate-400">Ventas para Llevar</p>
+            <p class="text-2xl font-bold text-emerald-400">${{ "%.2f"|format(total_sales_takeaway) }}</p>
+        </div>
+        <div class="md:border-l-2 border-slate-700">
+            <p class="text-sm text-slate-400">TOTAL VENTAS</p>
+            <p class="text-2xl font-bold text-amber-500">${{ "%.2f"|format(total_sales) }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="bg-slate-800 shadow-lg rounded-lg overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-700">
+        <thead class="bg-slate-700/50">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">ID Pedido</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Tipo</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Detalles</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Fecha/Hora Pago/Anulación</th>
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">Total</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Estado Pedido</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Acciones</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Tipo / Detalle</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Método Pago</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">Total</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">Estado</th>
+                <th class="px-6 py-3 text-center text-xs font-medium text-slate-300 uppercase tracking-wider">Acciones</th>
             </tr>
         </thead>
-        <tbody class="bg-gray-800 divide-y divide-gray-700">
+        <tbody class="divide-y divide-slate-700">
             {% for sale_order in pagination.items %} 
-            <tr class="hover:bg-gray-700">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-100">
-                    <a href="{{ url_for('admin.sale_detail_view', order_id=sale_order.id, page=pagination.page, date=date_filter) }}" class="text-orange-400 hover:text-orange-300 hover:underline">
+            <tr class="hover:bg-slate-700/50">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-100">
+                    <a href="{{ url_for('admin.sale_detail_view', order_id=sale_order.id, page=pagination.page, date=date_filter) }}" class="text-amber-500 hover:text-amber-400 hover:underline">
                         #{{ sale_order.id }}
                     </a>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ sale_order.type|capitalize }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                    {% if sale_order.type == 'mesa' %}Mesa {{ sale_order.table_assigned.number if sale_order.table_assigned else 'N/A' }}{% endif %}
-                    {% if sale_order.type == 'llevar' %}{{ sale_order.customer_name }}{% endif %}
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                    {{ sale_order.type }} 
+                    <span class="text-slate-400">
+                        ({% if sale_order.type == 'Mesa' %}Mesa {{ sale_order.table_assigned.number if sale_order.table_assigned else 'N/A' }}{% else %}{{ sale_order.customer_name }}{% endif %})
+                    </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{{ sale_order.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 text-right">${{ "%.2f"|format(sale_order.total_amount) }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                     <span class="px-2 py-1 text-xs font-semibold rounded-full 
-                        {% if sale_order.status == 'Pagado' %}bg-green-500 text-green-900{% endif %}
-                        {% if sale_order.status == 'Venta Anulada' %}bg-red-500 text-red-900{% endif %}
-                        ">{{ sale_order.status }}</span>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{{ sale_order.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-300">{{ sale_order.payment_method or 'N/A' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-100 text-right">${{ "%.2f"|format(sale_order.total_amount) }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
+                     <span class="px-2.5 py-1 text-xs font-semibold rounded-full 
+                        {% if sale_order.status == 'Pagado' %}bg-emerald-500/20 text-emerald-300
+                        {% elif sale_order.status == 'Venta Anulada' %}bg-red-500/20 text-red-300
+                        {% endif %}">
+                        {{ sale_order.status }}
+                    </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
                     {% if sale_order.status == 'Pagado' %}
-                    {# Pasar page y date al action del formulario para mantener el contexto al redirigir #}
-                    <form action="{{ url_for('admin.annul_sale', order_id=sale_order.id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Estás seguro de que quieres ANULAR esta venta (Pedido ID: {{sale_order.id}})? Esta acción puede afectar el stock.');">
+                    <form action="{{ url_for('admin.annul_sale', order_id=sale_order.id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Seguro que quieres ANULAR esta venta (Pedido #{{sale_order.id}})? El stock será repuesto.');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="page" value="{{ pagination.page }}">
                         <input type="hidden" name="date" value="{{ date_filter or '' }}">
-                        <button type="submit" class="text-yellow-400 hover:text-yellow-300 text-xs">Anular Venta</button>
+                        <button type="submit" class="text-yellow-500 hover:text-yellow-400 transition-colors">Anular</button>
                     </form>
-                    {% elif sale_order.status == 'Venta Anulada' %}
-                     <span class="text-xs text-gray-500 italic">(Anulada)</span>
+                    {% else %}
+                     <span class="text-xs text-slate-500 italic">(Anulada)</span>
                     {% endif %}
                 </td>
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">No se encontraron ventas para este período o filtro.</td>
+                <td colspan="7" class="px-6 py-10 text-center text-sm text-slate-500">No se encontraron ventas para este período.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-{# Controles de Paginación para Ventas #}
 {% if pagination and pagination.pages > 1 %}
-<nav aria-label="Paginación de ventas" class="mt-8 flex justify-center">
-    <ul class="inline-flex items-center -space-x-px">
-        {% if pagination.has_prev %}
-        <li>
-            <a href="{{ url_for('admin.sales_log', page=pagination.prev_num, date=date_filter) }}"
-               class="py-2 px-3 ml-0 leading-tight text-gray-400 bg-gray-700 border border-gray-600 rounded-l-lg hover:bg-gray-600 hover:text-orange-400">
-                &laquo;
-            </a>
-        </li>
-        {% else %}
-        <li><span class="py-2 px-3 ml-0 leading-tight text-gray-500 bg-gray-800 border border-gray-600 rounded-l-lg cursor-not-allowed">&laquo;</span></li>
-        {% endif %}
-        {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-            {% if page_num %}
-                {% if pagination.page == page_num %}
-                <li><span aria-current="page" class="py-2 px-3 leading-tight text-orange-500 bg-gray-600 border border-gray-500 z-10">{{ page_num }}</span></li>
-                {% else %}
-                <li><a href="{{ url_for('admin.sales_log', page=page_num, date=date_filter) }}" class="py-2 px-3 leading-tight text-gray-400 bg-gray-700 border border-gray-600 hover:bg-gray-600 hover:text-orange-400">{{ page_num }}</a></li>
-                {% endif %}
-            {% else %}
-                <li><span class="py-2 px-3 leading-tight text-gray-500 bg-gray-700 border border-gray-600">...</span></li>
-            {% endif %}
-        {% endfor %}
-        {% if pagination.has_next %}
-        <li>
-            <a href="{{ url_for('admin.sales_log', page=pagination.next_num, date=date_filter) }}"
-               class="py-2 px-3 leading-tight text-gray-400 bg-gray-700 border border-gray-600 rounded-r-lg hover:bg-gray-600 hover:text-orange-400">
-                &raquo;
-            </a>
-        </li>
-        {% else %}
-        <li><span class="py-2 px-3 leading-tight text-gray-500 bg-gray-800 border border-gray-600 rounded-r-lg cursor-not-allowed">&raquo;</span></li>
-        {% endif %}
-    </ul>
-</nav>
-<p class="text-center text-sm text-gray-500 mt-2">
-    Página {{ pagination.page }} de {{ pagination.pages }}. Mostrando {{ pagination.items|length }} de {{ pagination.total }} registros.
-</p>
-{% endif %}
-
-<div class="bg-gray-800 p-4 rounded-lg shadow-md text-right mt-6">
-    <h2 class="text-xl font-semibold text-orange-400">Ventas Activas (según filtro actual): <span class="text-gray-100">${{ "%.2f"|format(total_active_sales_value) }}</span></h2>
+<div class="mt-6 flex justify-between items-center text-sm">
+    <p class="text-slate-400">
+        Página {{ pagination.page }} de {{ pagination.pages }}.
+    </p>
+    <nav class="flex rounded-md shadow-sm" aria-label="Pagination">
+        <a href="{{ url_for('admin.sales_log', page=pagination.prev_num, date=date_filter) if pagination.has_prev else '#' }}" 
+           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-700 bg-slate-800 font-medium text-slate-400 hover:bg-slate-700
+                  {% if not pagination.has_prev %}pointer-events-none text-slate-600{% endif %}">
+            Anterior
+        </a>
+        <a href="{{ url_for('admin.sales_log', page=pagination.next_num, date=date_filter) if pagination.has_next else '#' }}" 
+           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-700 bg-slate-800 font-medium text-slate-400 hover:bg-slate-700
+                  {% if not pagination.has_next %}pointer-events-none text-slate-600{% endif %}">
+            Siguiente
+        </a>
+    </nav>
 </div>
+{% endif %}
 {% endblock %}

@@ -1,17 +1,18 @@
+# Archivo: app/auth.py
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from werkzeug.security import check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from .models import User
 from . import db
-from flask_wtf.csrf import generate_csrf
 
-# CORRECCIÓN: Se elimina template_folder='templates'
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('admin.dashboard') if current_user.role == 'admin' else url_for('mozo.tables_view'))
+        if current_user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('mozo.tables_view'))
 
     if request.method == 'POST':
         username = request.form.get('username')
@@ -24,14 +25,17 @@ def login():
             return redirect(url_for('auth.login'))
 
         login_user(user, remember=remember)
-        return redirect(url_for('admin.dashboard') if user.role == 'admin' else url_for('mozo.tables_view'))
+        
+        if user.role == 'admin':
+            return redirect(url_for('admin.dashboard'))
+        else:
+            return redirect(url_for('mozo.tables_view'))
 
-    csrf_token_value = generate_csrf()
-    return render_template('auth/login.html', title="Iniciar Sesión", csrf_token_value=csrf_token_value)
+    return render_template('auth/login.html', title="Iniciar Sesión")
 
 @auth_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    flash('Has cerrado sesión.', 'info')
+    flash('Has cerrado sesión exitosamente.', 'info')
     return redirect(url_for('auth.login'))
